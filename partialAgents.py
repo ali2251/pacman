@@ -190,10 +190,28 @@ class PartialAgent(Agent):
 
 
         else:
+            minX = 100
+            minY = 100
+            maxX = 0
+            maxY = 0
+            corners = api.corners(state)
+            for i in range(len(corners)):
+                cornerX = corners[i][0] # corners[i] => (2,13)[0] => 2 => (2,13)[i][0] => 2
+                cornerY = corners[i][1] # corners[i] => (2,13)[1] => 13
+                print
+
+                if cornerX < minX:
+                    minX = cornerX
+                if cornerY < minY:
+                    minY = cornerY
+                if cornerX > maxX:
+                    maxX = cornerX
+                if cornerY > maxY:
+                    maxY = cornerY
             if len(theFood) == 0:
                 print "distance > 1"
                 corners = api.corners(state)
-                print corners
+                print corners, " are corners"
                 # Setup variable to hold the values
                 minX = 100
                 minY = 100
@@ -325,6 +343,22 @@ class PartialAgent(Agent):
                     #print food[0],"   ", food[1] , "-------^^^"
 
                 distance = util.manhattanDistance(pacman,food)
+                if pacman[0] == minX + 1:
+                    if pacman[1] == minY + 1:
+                        print "Got to BL!"
+                        self.BL = True
+                if pacman[0] == minX + 1:
+                   if pacman[1] == maxY - 1:
+                        print "Got to TL!"
+                        self.TL = True
+                if pacman[0] == maxX - 1:
+                   if pacman[1] == maxY - 1:
+                        print "Got to TR!"
+                        self.TR = True
+                if pacman[0] == maxX - 1:
+                   if pacman[1] == minY + 1:
+                        print "Got to BR!"
+                        self.BR = True
 
                 print "coming here"
 
