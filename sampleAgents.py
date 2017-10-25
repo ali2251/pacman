@@ -34,6 +34,462 @@ import game
 import util
 
 
+class CornerSmartAgent(Agent):
+    def __init__(self):
+         self.BL = False
+         self.TL = False
+         self.BR = False
+         self.TR = False
+         self.corner = 0,0
+         self.visitedCorners = []
+         self.rechableCorners = []
+         self.check = False
+         self.allFood = []
+         self.last = Directions.STOP
+         self.maxX = 1000
+         self.maxY = 1000
+         self.minX = 0
+         self.minY = 0
+
+    # Function run at end of games --- rest target positions so that
+    # if we run multiple games using -n 5, they all have the agent
+    # starting trying to go to BL.
+
+    def final(self, state):
+         self.BL = False
+         self.TL = False
+         self.BR = False
+         self.TR = False
+         self.corner = 0,0
+         self.visitedCorners = []
+         self.rechableCorners = []
+         self.check = False
+         self.allFood = []
+         self.last = Directions.STOP
+         self.maxX = 1000
+         self.maxY = 1000
+         self.minX = 0
+         self.minY = 0
+
+
+
+
+    def getAction(self, state):
+
+        def findNearestCorner(pacmanPos, corners):
+            mindist = 100000;
+            corner = 1,0
+            for c in corners:
+                if  c not in self.visitedCorners:
+                    temp = util.manhattanDistance(pacman,c)
+                    if temp < mindist and c not in self.visitedCorners:
+                        mindist = temp
+                        corner = c
+            return corner
+
+        def rechableCorner(corners):
+            toReturn = []
+            for i in range(len(corners)):
+                if(corners[i] == (0,0)):
+                    print "here 1"
+                    self.minX = corners[i][0]+1
+                    self.minY = corners[i][1]+1
+                    toReturn.append((corners[i][0]+1,corners[i][1]+1))
+                elif(corners[i][1] == 0):
+                    print "here 2 "
+                    self.maxX = corners[i][0]-1
+                    toReturn.append((corners[i][0]-1, corners[i][1]+1))
+                elif(corners[i][0] == 0):
+                    print "should be some"
+                    self.maxY = corners[i][1]-1
+                    toReturn.append((corners[i][0]+1, corners[i][1]-1))
+                else:
+                    print "here 2"
+                    toReturn.append((corners[i][0]-1,corners[i][1]-1))
+            return toReturn;
+
+        def getNearestCorner(pacman,corners):
+            cornersAmended = rechableCorner(corners)
+            if(self.check == False):
+                self.rechableCorners = cornersAmended
+                self.check = True
+            return findNearestCorner(pacman, cornersAmended)
+
+        def getDirection(pacman, dest, legal):
+            print "is here"
+            if(pacman[1] > dest[1]):
+                print "first if"
+                if (Directions.SOUTH in legal):
+                    return Directions.SOUTH
+                else:
+                    if self.last in legal and self.last != Directions.STOP:
+                        return api.makeMove(self.last, legal)
+                    else:
+                        self.last = random.choice(legal)
+                        return api.makeMove(self.last, legal)
+
+            else:
+                print "no clue"
+                if (Directions.NORTH in legal):
+                    return Directions.NORTH
+                else:
+                    print "coming here"
+                    pick = random.choice(legal)
+                    return api.makeMove(pick, legal)
+
+
+        def getPath(pacman, destination):
+            print "in get path"
+
+        def getOneStep(pacman, destination, walls):
+            x, y = pacman
+            x1,y1 = destination
+            if x > x1:
+                if (x-1,y) in walls:
+                    #try going up
+                    if (x,y+1) not in walls:
+                        return Directions.NORTH
+                    else:
+                        if (x,y-1) not in walls:
+                            return Directions.SOUTH
+                        else:
+                            return Directions.EAST
+                else:
+                    return Directions.WEST
+            elif x1 > x:
+                #go east
+                if (x+1,y) in walls:
+                    #try going up
+                    if (x,y+1) not in walls:
+                        return Directions.NORTH
+                    else:
+                        if (x,y-1) not in walls:
+                            return Directions.SOUTH
+                        else:
+                            return Directions.WEST
+                else:
+                    return Directions.EAST
+            elif y > y1:
+                #come down
+                if (x,y-1) in walls:
+                    #try going west
+                    if (x-1,y) not in walls:
+                        return Directions.WEST
+                    else:
+                        if (x+1,y) not in walls:
+                            return Directions.EAST
+                        else:
+                            return Directions.NORTH
+                else:
+                    return Directions.SOUTH
+            elif y1 > y:
+                if (x,y+1) in walls:
+                    #try going west
+                    if (x-1,y) not in walls:
+                        return Directions.WEST
+                    else:
+                        if (x+1,y) not in walls:
+                            return Directions.EAST
+                        else:
+                            return Directions.SOUTH
+                else:
+                    return Directions.NORTH
+
+
+        def getOneStepToCorner(pacman, corner, walls, legal, theFood, ghostArray):
+            distance = util.manhattanDistance(pacman,corner)
+            #for bottom left corner only
+            print "all food ", self.allFood
+            print "corner",corner
+            print "pacman", pacman
+
+            if len(ghostArray) > 0:
+                print "yes"
+                value = 100000;
+                for i in range(len(ghostArray)):
+                    temp = util.manhattanDistance(pacman,ghostArray[i])
+                    if temp < value:
+                        value = temp;
+                        nearestGhost = ghostArray[i]
+
+
+                    #print food[0],"   ", food[1] , "-------^^^"
+
+                distance = util.manhattanDistance(pacman,nearestGhost)
+
+                print "pacman ", pacman
+                print "ghost", nearestGhost
+                x = nearestGhost[0]
+                y = nearestGhost[1]
+                x1 = pacman[0]
+                y1 = pacman[1]
+
+                if (x > x1 and y > y1):
+                    print "diagonal 1"
+                    if south in legal:
+                        return api.makeMove(south, legal)
+                    else:
+                        if west in legal:
+                            return api.makeMove(west, legal)
+                        else:
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+                elif ( x < x1 and y > y1):
+                    print "diagonal 2"
+                    if south in legal:
+                        print "going south"
+                        return api.makeMove(south, legal)
+                    else:
+                        if east in legal:
+                            print "going east"
+                            return api.makeMove(east, legal)
+                        else:
+                            print "going random"
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+                elif (x < x1 and y < y1):
+                    print "diagonal 3"
+                    if north in legal:
+                        return api.makeMove(north, legal)
+                    else:
+                        if east in legal:
+                            return api.makeMove(east, legal)
+                        else:
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+                elif (x > x1 and y < y1):
+                    print "diagonal 4"
+                    if west in legal:
+                        return api.makeMove(west, legal)
+                    else:
+                        if north in legal:
+                            return api.makeMove(north, legal)
+                        else:
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+
+                elif x1 > x:
+                    if east in legal:
+                        return api.makeMove(east, legal)
+                    else:
+                        temp = legal
+                        if west in temp:
+                            temp.remove(west)
+                        print "random from nearest ghost wast"
+                        pick = random.choice(temp)
+                        return api.makeMove(pick, temp)
+                elif x > x1:
+                    if west in legal:
+                        return api.makeMove(west, legal)
+                    else:
+                        temp = legal
+                        if east in temp:
+                            temp.remove(east)
+                        print "random from nearest ghost east"
+                        pick = random.choice(temp)
+                        return api.makeMove(pick, temp)
+                elif y1 > y:
+                    if north in legal:
+                        return api.makeMove(north, legal)
+                    else:
+                        print "random from nearest ghost north"
+                        temp = legal
+                        if south in temp:
+                            temp.remove(south)
+                        pick = random.choice(temp)
+                        return api.makeMove(pick, temp)
+                elif y > y1:
+                    if south in legal:
+                        return api.makeMove(south, legal)
+                    else:
+                        print "random from nearest ghost south"
+                        temp = legal
+                        if north in temp:
+                            temp.remove(north)
+                        pick = random.choice(temp)
+                        return api.makeMove(pick, temp)
+                else:
+                    print "helloo there, making random move "
+                    pick = random.choice(legal)
+                    return api.makeMove(pick, legal)
+
+
+
+            else:
+
+                if(len(theFood) == 0):
+
+
+                    if(len(self.visitedCorners) == 4 ):
+                        print "here we are"
+                        self.visitedCorners = []
+                        '''value  = 1000000;
+
+                        for food in self.allFood:
+                            distance = util.manhattanDistance(pacman,food)
+                            if(distance < value):
+                                self.corner = food'''
+
+
+
+
+                    if(pacman[0] > corner[0]):
+                        #need to go west
+                        print "coming gere"
+                        if Directions.WEST in legal:
+                            return Directions.WEST
+                        else:
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+
+                    elif(pacman[0] == corner[0]):
+                        print "needs to visit BL and TL"
+                        print self.visitedCorners, " visited corners"
+                        if(pacman == corner):
+                            print "pacman at corner"
+                            self.visitedCorners.append(corner)
+                            print "new visited corners", self.visitedCorners
+                            #lets visit BL = 1,1
+                            if corner == (1,1):
+                                if Directions.SOUTH in legal:
+                                    return Directions.SOUTH
+                                else:
+                                    if Directions.NORTH in legal:
+                                        return Directions.NORTH
+                            elif (corner[1] == 0):
+                                if Directions.SOUTH in legal:
+                                    return Directions.SOUTH
+                                else:
+                                    if Directions.NORTH in legal:
+                                        return Directions.NORTH
+                            elif (corner[0] == 0):
+                                if Directions.NORTH in legal:
+                                    return Directions.NORTH
+                                else:
+                                    if Directions.SOUTH in legal:
+                                        return Directions.SOUTH
+                            else:
+                                print "aaaaaa"
+                                if Directions.NORTH in legal:
+                                    return Directions.NORTH
+                                else:
+                                    if Directions.SOUTH in legal:
+                                        return Directions.SOUTH
+                                    else:
+                                        pick = random.choice(legal)
+                                        return api.makeMove(pick, legal)
+
+                        else:
+                            print "hmmmmmmmmmm"
+                            return getDirection(pacman, corner, legal)
+                    elif (pacman[0] < corner[0]):
+                        print "final"
+                        index = -1;
+                        directions = [Directions.SOUTH, Directions.NORTH, Directions.WEST,Directions.EAST ]
+                        if Directions.EAST in legal:
+                            return Directions.EAST
+                        else:
+                            pick = random.choice(legal)
+                            return api.makeMove(pick, legal)
+
+                else:
+                    print "here"
+                    print theFood
+                    food = (0,1)
+                    value = 100000
+                    for i in range(len(theFood)):
+                        temp = util.manhattanDistance(pacman,theFood[i])
+                        if temp < value:
+                            value = temp;
+                            food = theFood[i]
+
+
+                        #print food[0],"   ", food[1] , "-------^^^"
+
+                    distance = util.manhattanDistance(pacman,food)
+
+                    print "coming here"
+
+                    x = food[0]
+                    y = food[1]
+                    x1 = pacman[0]
+                    y1 = pacman[1]
+
+                    if(pacman in self.rechableCorners):
+
+                        self.visitedCorners.append(pacman)
+
+                    if x1 > x:
+                        if west in legal:
+                            return api.makeMove(west, legal)
+                    elif x > x1:
+                        if east in legal:
+                            return api.makeMove(east, legal)
+                    elif y1 > y:
+                        if south in legal:
+                            return api.makeMove(south, legal)
+                    elif y > y1:
+                        if north in legal:
+                            return api.makeMove(north, legal)
+                    else:
+                        print "helloo there "
+                        pick = random.choice(legal)
+                        return api.makeMove(pick, legal)
+
+
+
+
+        walls = api.walls(state)
+        corners = api.corners(state)
+        legal = api.legalActions(state)
+        pacman = api.whereAmI(state)
+
+        if Directions.STOP in legal:
+            legal.remove(Directions.STOP)
+
+        theFood = api.food(state)
+
+        west = Directions.WEST
+        east = Directions.EAST
+        south = Directions.SOUTH
+        north = Directions.NORTH
+
+        for f in theFood:
+            if(f not in self.allFood):
+                self.allFood.append(f)
+
+        if(pacman in  self.allFood):
+            self.allFood.remove(pacman)
+
+        value = 100000;
+        foodCoordinates = (0,0)
+        ghostArray = api.ghosts(state);
+
+        #if (len(self.visitedCorners)  < 5):
+        self.corner = getNearestCorner(pacman, corners)
+
+
+        print corners, " are corners"
+
+        direction = getOneStepToCorner(pacman, self.corner, walls, legal, theFood, ghostArray)
+
+        print "corner is: ", self.corner
+        print "pacman is: ", pacman
+        return api.makeMove(direction, legal)
+        '''if Directions.WEST in legal:
+            return api.makeMove(Directions.WEST, legal)
+        else:
+            pick = random.choice(legal)
+            return api.makeMove(pick, legal)'''
+
+
+
+
+
+
+
+
+
 class CornerSeekingAgent(Agent):
 
     # Constructor
@@ -42,7 +498,7 @@ class CornerSeekingAgent(Agent):
     def __init__(self):
          self.BL = False
          self.TL = False
-         self.UR = False
+         self.BR = False
          self.TR = False
 
     # Function run at end of games --- rest target positions so that
@@ -52,7 +508,7 @@ class CornerSeekingAgent(Agent):
     def final(self, state):
          self.BL = False
          self.TL = False
-         self.UR = False
+         self.BR = False
          self.TR = False
 
     def getAction(self, state):
@@ -71,7 +527,7 @@ class CornerSeekingAgent(Agent):
         for i in range(len(corners)):
             cornerX = corners[i][0] # corners[i] => (2,13)[0] => 2 => (2,13)[i][0] => 2
             cornerY = corners[i][1] # corners[i] => (2,13)[1] => 13
-            print
+
 
             if cornerX < minX:
                 minX = cornerX
@@ -251,19 +707,6 @@ class HungryAgent(Agent):
             else:
                 pick = random.choice(legal)
                 return api.makeMove(pick, legal)
-            '''if util.manhattanDistance((pacman[0]+1,pacman[1]),food) < distance:
-                if east in legal:
-                    return api.makeMove(east, legal)
-            if util.manhattanDistance((pacman[0]-1,pacman[1]),food) < distance:
-                if west in legal:
-                    return api.makeMove(west, legal)
-            if util.manhattanDistance((pacman[0],pacman[1]+1),food) < distance:
-                if north in legal:
-                    return api.makeMove(north, legal)
-            if util.manhattanDistance((pacman[0],pacman[1]-1),food) < distance:
-                if south in legal:
-                    return api.makeMove(south, legal)
-            else:'''
 
 
         x = food[0]

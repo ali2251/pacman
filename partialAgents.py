@@ -190,24 +190,14 @@ class PartialAgent(Agent):
 
 
         else:
+            corners = api.corners(state)
+            print corners, " are corners"
+            # Setup variable to hold the values
             minX = 100
             minY = 100
             maxX = 0
             maxY = 0
-            corners = api.corners(state)
-            for i in range(len(corners)):
-                cornerX = corners[i][0] # corners[i] => (2,13)[0] => 2 => (2,13)[i][0] => 2
-                cornerY = corners[i][1] # corners[i] => (2,13)[1] => 13
-                print
 
-                if cornerX < minX:
-                    minX = cornerX
-                if cornerY < minY:
-                    minY = cornerY
-                if cornerX > maxX:
-                    maxX = cornerX
-                if cornerY > maxY:
-                    maxY = cornerY
             if len(theFood) == 0:
                 print "distance > 1"
                 corners = api.corners(state)
@@ -220,19 +210,14 @@ class PartialAgent(Agent):
 
                 # Sweep through corner coordinates looking for max and min
                 # values.
+                value = 100000
+                corner = corners[0]
                 for i in range(len(corners)):
-                    cornerX = corners[i][0] # corners[i] => (2,13)[0] => 2 => (2,13)[i][0] => 2
-                    cornerY = corners[i][1] # corners[i] => (2,13)[1] => 13
-                    print
+                    temp = util.manhattanDistance(pacman,corners[i])
+                    if temp < value:
+                        value = temp;
+                        corner = corners[i]
 
-                    if cornerX < minX:
-                        minX = cornerX
-                    if cornerY < minY:
-                        minY = cornerY
-                    if cornerX > maxX:
-                        maxX = cornerX
-                    if cornerY > maxY:
-                        maxY = cornerY
 
                 # Get the actions we can try, and remove "STOP" if that is one of them.
                 legal = api.legalActions(state)
@@ -247,25 +232,29 @@ class PartialAgent(Agent):
                 #
 
                 # Check we aren't there:
-                if pacman[0] == minX + 1:
-                    if pacman[1] == minY + 1:
-                        print "Got to BL!"
-                        self.BL = True
+                if corner[0] == 0 and corner[1] == 0:
+                    if pacman[0] == corner[0] + 1:
+                        if pacman[1] == corner[1] + 1:
+                            print "Got to BL!"
+                            self.BL = True
 
-                # If not, move towards it, first to the West, then to the South.
-                if self.BL == False:
-                    if pacman[0] > minX + 1:
-                        if Directions.WEST in legal:
-                            return api.makeMove(Directions.WEST, legal)
+                    # If not, move towards it, first to the West, then to the South.
+                    if self.BL == False:
+                        if pacman[0] > corner[0] + 1:
+                            if Directions.WEST in legal:
+                                return api.makeMove(Directions.WEST, legal)
+                            else:
+                                pick = random.choice(legal)
+                                return api.makeMove(pick, legal)
                         else:
-                            pick = random.choice(legal)
-                            return api.makeMove(pick, legal)
-                    else:
-                        if Directions.SOUTH in legal:
-                            return api.makeMove(Directions.SOUTH, legal)
-                        else:
-                            pick = random.choice(legal)
-                            return api.makeMove(pick, legal)
+                            if Directions.SOUTH in legal:
+                                return api.makeMove(Directions.SOUTH, legal)
+                            else:
+                                pick = random.choice(legal)
+                                return api.makeMove(pick, legal)
+                elif corner[0] == 0:
+
+
                 #
                 # Now we've got the lower left corner
                 #
@@ -273,37 +262,37 @@ class PartialAgent(Agent):
                 # Move towards the top left corner
 
                 # Check we aren't there:
-                if pacman[0] == minX + 1:
-                   if pacman[1] == maxY - 1:
-                        print "Got to TL!"
-                        self.TL = True
+                    if pacman[0] == corner[0] + 1:
+                       if pacman[1] == corner[1] - 1:
+                            print "Got to TL!"
+                            self.TL = True
 
-                # If not, move West then North.
-                if self.TL == False:
-                    if pacman[0] > minX + 1:
-                        if Directions.WEST in legal:
-                            return api.makeMove(Directions.WEST, legal)
+                    # If not, move West then North.
+                    if self.TL == False:
+                        if pacman[0] > corner[0] + 1:
+                            if Directions.WEST in legal:
+                                return api.makeMove(Directions.WEST, legal)
+                            else:
+                                pick = random.choice(legal)
+                                return api.makeMove(pick, legal)
                         else:
-                            pick = random.choice(legal)
-                            return api.makeMove(pick, legal)
-                    else:
-                        if Directions.NORTH in legal:
-                            return api.makeMove(Directions.NORTH, legal)
-                        else:
-                            pick = random.choice(legal)
-                            return api.makeMove(pick, legal)
+                            if Directions.NORTH in legal:
+                                return api.makeMove(Directions.NORTH, legal)
+                            else:
+                                pick = random.choice(legal)
+                                return api.makeMove(pick, legal)
 
                 # Now, the top right corner
 
                 # Check we aren't there:
-                if pacman[0] == maxX - 1:
-                   if pacman[1] == maxY - 1:
+                if pacman[0] == corner[0] - 1:
+                   if pacman[1] == corner[1] - 1:
                         print "Got to TR!"
                         self.TR = True
 
                 # Move east where possible, then North
                 if self.TR == False:
-                    if pacman[0] < maxX - 1:
+                    if pacman[0] < corner[0] - 1:
                         if Directions.EAST in legal:
                             return api.makeMove(Directions.EAST, legal)
                         else:
@@ -318,8 +307,8 @@ class PartialAgent(Agent):
 
                 # Fromto right it is a straight shot South to get to the bottom right.
 
-                if pacman[0] == maxX - 1:
-                   if pacman[1] == minY + 1:
+                if pacman[0] == corner[0] - 1:
+                   if pacman[1] == corner[1] + 1:
                         print "Got to BR!"
                         self.BR = True
                         return api.makeMove(Directions.WEST, legal)
