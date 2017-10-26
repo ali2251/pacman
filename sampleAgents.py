@@ -272,42 +272,28 @@ class CornerSmartAgent(Agent):
                     if east in legal:
                         return api.makeMove(east, legal)
                     else:
-                        temp = legal
-                        if west in temp:
-                            temp.remove(west)
-                        print "random from nearest ghost wast"
-                        pick = random.choice(temp)
-                        return api.makeMove(pick, temp)
+                        pick = random.choice(legal)
+                        return api.makeMove(pick, legal)
                 elif x > x1:
                     if west in legal:
                         return api.makeMove(west, legal)
                     else:
-                        temp = legal
-                        if east in temp:
-                            temp.remove(east)
-                        print "random from nearest ghost east"
-                        pick = random.choice(temp)
-                        return api.makeMove(pick, temp)
+                        pick = random.choice(legal)
+                        return api.makeMove(pick, legal)
                 elif y1 > y:
                     if north in legal:
                         return api.makeMove(north, legal)
                     else:
                         print "random from nearest ghost north"
-                        temp = legal
-                        if south in temp:
-                            temp.remove(south)
-                        pick = random.choice(temp)
-                        return api.makeMove(pick, temp)
+                        pick = random.choice(legal)
+                        return api.makeMove(pick, legal)
                 elif y > y1:
                     if south in legal:
                         return api.makeMove(south, legal)
                     else:
                         print "random from nearest ghost south"
-                        temp = legal
-                        if north in temp:
-                            temp.remove(north)
-                        pick = random.choice(temp)
-                        return api.makeMove(pick, temp)
+                        pick = random.choice(legal)
+                        return api.makeMove(pick, legal)
                 else:
                     print "helloo there, making random move "
                     pick = random.choice(legal)
