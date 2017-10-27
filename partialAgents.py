@@ -253,6 +253,7 @@ class PartialAgent(Agent):
 
             #check which way the ghost is and go opposite way
             if (x > x1 and y > y1):
+                #the diagonal case where the ghost is at top-right to pacman
                 if south in legal:
                     return api.makeMove(south, legal)
                 else:
@@ -262,6 +263,7 @@ class PartialAgent(Agent):
                         pick = random.choice(legal)
                         return api.makeMove(pick, legal)
             elif ( x < x1 and y > y1):
+                #the diagonal case where the ghost is at top-left to pacman
                 if south in legal:
                     return api.makeMove(south, legal)
                 else:
@@ -272,6 +274,7 @@ class PartialAgent(Agent):
                         pick = random.choice(legal)
                         return api.makeMove(pick, legal)
             elif (x < x1 and y < y1):
+                #the diagonal case where the ghost is at bottom left to pacman
                 if north in legal:
                     return api.makeMove(north, legal)
                 else:
@@ -281,6 +284,7 @@ class PartialAgent(Agent):
                         pick = random.choice(legal)
                         return api.makeMove(pick, legal)
             elif (x > x1 and y < y1):
+                #the diagonal case where the ghost is at bottom right to pacman
                 if west in legal:
                     return api.makeMove(west, legal)
                 else:
@@ -294,6 +298,7 @@ class PartialAgent(Agent):
                 if east in legal:
                     return api.makeMove(east, legal)
                 else:
+                    #remove west as it is more likely to get pacman killed
                     temp = legal
                     if west in temp:
                         temp.remove(west)
