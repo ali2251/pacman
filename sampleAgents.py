@@ -79,6 +79,14 @@ class CornerSmartAgent(Agent):
         def findNearestCorner(pacmanPos, corners):
             mindist = 100000;
             corner = 1,0
+            if len(self.visitedCorners) == 4:
+                print "====================== \n\n\n\n"
+                for food in self.allFood:
+                    distance = util.manhattanDistance(pacman,food)
+                    if(distance < value):
+                        self.corner = food
+                return self.corner
+
             for c in corners:
                 if  c not in self.visitedCorners:
                     temp = util.manhattanDistance(pacman,c)
@@ -138,8 +146,104 @@ class CornerSmartAgent(Agent):
                     return api.makeMove(pick, legal)
 
 
-        def getPath(pacman, destination):
+        def getPath(pacman, destination, walls):
             print "in get path"
+
+        def isGoal(goalPosition, currentPos):
+            if goalPosition == currentPos:
+                return True
+            else:
+                return False
+
+        def getChildren(position, walls):
+
+            #print "x min max , y min max", self.minX, self.maxX, " \n", self.minY, self.maxY
+
+            if position[0] < 0 or position[1] < 0 or position[0] > self.maxX or position[1] > self.maxY:
+                return []
+            children = [((position[0]+1, position[1]), Directions.EAST), ((position[0]-1, position[1]), Directions.WEST),
+            ((position[0], position[1]+1), Directions.NORTH ), ((position[0], position[1]-1), Directions.SOUTH ) ]
+
+            for c in children:
+
+                if c[0] in walls or c[0][0] > self.maxX or c[0][0] < self.minX or c[0][1] > self.maxY or c[0][1] < self.minY:
+                    children.remove(c)
+
+            for c in children:
+                if c[0][0] < 0 or c[0][1] < 0 or c[0] in walls:
+                    #print "here ============================ \n"
+                    children.remove(c)
+            return children
+
+
+        def construct_path(state, meta):
+              action_list = []
+              print "meta", meta
+
+              while True:
+                row = meta[state]
+                print "row", row
+                if row[0] != None:
+                  state = row[0]
+                  action = row[1]
+                  action_list.append(action)
+                else:
+                  break
+
+              print "returnong action_list" , action_list
+              return action_list
+
+
+
+        def breadth_first_search(currentPos, goalPosition, walls):
+
+
+          # a FIFO open_set
+          import Queue
+          open_set = Queue.Queue()
+          openset = []
+          # an empty set to maintain visited nodes
+          closed_set = set()
+          # a dictionary to maintain meta information (used for path formation)
+          meta = dict()  # key -> (parent state, action to reach child)
+
+          # initialize
+          start = currentPos
+          meta[start] = (None, None)
+          open_set.put(start)
+          openset.append(start)
+
+          while not open_set.empty():
+
+            parent_state = open_set.get()
+            openset.pop(0)
+
+            print "goal is: ", goalPosition, "  currentPos: " , currentPos
+
+            if isGoal(goalPosition, parent_state):
+                    path = construct_path(parent_state, meta)
+                    print "reverse path is: ",
+                    return path[::-1]
+            for (child_state, action) in getChildren(parent_state, walls):
+
+              if child_state in closed_set:
+                continue
+
+              if child_state not in openset:
+                meta[child_state] = (parent_state, action)
+                open_set.put(child_state)
+                openset.append(child_state)
+
+
+            closed_set.add(parent_state)
+
+
+
+
+
+
+
+
 
         def getOneStep(pacman, destination, walls):
             x, y = pacman
@@ -329,7 +433,7 @@ class CornerSmartAgent(Agent):
                                 return api.makeMove(north, legal)
                             else:
                                 return api.makeMove(Directions.STOP, legal)
-                        else:    
+                        else:
                             pick = random.choice(temp)
                             return api.makeMove(pick, temp)
                 else:
@@ -341,21 +445,31 @@ class CornerSmartAgent(Agent):
 
             else:
 
+                corners = api.corners(state)
                 if(len(theFood) == 0):
 
 
-                    if(len(self.visitedCorners) == 4 ):
+                    if(len(self.visitedCorners) > 4 ):
                         print "here we are"
-                        self.visitedCorners = []
-                        '''value  = 1000000;
+
+                        value  = 1000000;
 
                         for food in self.allFood:
                             distance = util.manhattanDistance(pacman,food)
                             if(distance < value):
-                                self.corner = food'''
+                                self.corner = food
 
 
-
+                    path = breadth_first_search(pacman, self.corner, walls)
+                    if(pacman == corner):
+                        print "pacman at corner"
+                        self.visitedCorners.append(corner)
+                        self.corner = getNearestCorner(pacman, corners)
+                        path = breadth_first_search(pacman, self.corner, walls)
+                        return path.pop(0)
+                    else:
+                        if path:
+                            return path.pop(0)
 
                     if(pacman[0] > corner[0]):
                         #need to go west
@@ -496,6 +610,11 @@ class CornerSmartAgent(Agent):
         print corners, " are corners"
 
         direction = getOneStepToCorner(pacman, self.corner, walls, legal, theFood, ghostArray)
+        print "pacman", pacman, "corner", self.corner, "walls", walls
+        bfs = breadth_first_search(pacman, (1,9), walls)
+        #print getChildren(pacman, walls), "--------------------------------"
+
+        print "\n"
 
         print "corner is: ", self.corner
         print "pacman is: ", pacman
